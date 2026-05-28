@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build artifacts (future)
+/build/
+/dist/
+*.o
+*.a
+*.so
+*.dylib

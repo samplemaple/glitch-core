@@ -1,0 +1,112 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>故障艺术 Demo #4 — 噪点颗粒 · 半色调 · 像素化</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d0d0d;color:#ccc;display:flex;height:100vh;overflow:hidden}
+.preview-panel{flex:1;display:flex;align-items:center;justify-content:center;background:#111;position:relative;min-width:0}
+.preview-panel canvas{max-width:100%;max-height:100%;object-fit:contain}
+.drop-zone{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border:2px dashed #333;border-radius:8px;margin:20px;color:#555;font-size:18px;cursor:pointer;transition:border-color .2s}
+.drop-zone:hover,.drop-zone.drag-over{border-color:#0f0;color:#0f0}
+.ctrl-panel{width:340px;background:#1a1a1a;display:flex;flex-direction:column;overflow-y:auto;border-left:1px solid #2a2a2a}
+.panel-header{padding:16px 20px;border-bottom:1px solid #2a2a2a;display:flex;justify-content:space-between;align-items:center}
+.panel-header h2{font-size:16px;color:#fff}
+.btn{padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-size:13px}
+.btn-primary{background:#0f0;color:#000;font-weight:600}.btn-primary:hover{background:#0c0}
+.effect-group{padding:16px 20px;border-bottom:1px solid #222}
+.effect-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.effect-header label{font-size:14px;color:#fff;font-weight:500}
+.toggle{position:relative;display:inline-block;width:40px;height:22px}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:#333;border-radius:22px;transition:.2s}
+.toggle-slider:before{content:'';position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#666;border-radius:50%;transition:.2s}
+.toggle input:checked+.toggle-slider{background:#0f0}
+.toggle input:checked+.toggle-slider:before{transform:translateX(18px);background:#000}
+.param-row{margin-bottom:10px}.param-row:last-child{margin-bottom:0}
+.param-label{display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:3px}
+.param-label span:last-child{color:#0f0;font-family:monospace}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:#333;border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:#0f0;border-radius:50%;cursor:pointer}
+select{width:100%;padding:4px 8px;background:#222;color:#ccc;border:1px solid #333;border-radius:4px;font-size:12px;outline:none}select:focus{border-color:#0f0}
+.noise-info{font-size:11px;color:#555;padding:8px 20px}
+</style></head><body>
+<div class="preview-panel" id="pp"><div class="drop-zone" id="dz">📁 拖拽图片到此处，或点击上传</div><canvas id="cv"></canvas></div>
+<div class="ctrl-panel">
+<div class="panel-header"><h2>🎛️ Glitch Art Demo #4</h2><button class="btn btn-primary" id="btnDL">下载 PNG</button></div>
+<!-- Grain -->
+<div class="effect-group"><div class="effect-header"><label>噪点颗粒 · Grain</label><label class="toggle"><input type="checkbox" id="f1" checked><span class="toggle-slider"></span></label></div>
+<div class="param-row"><div class="param-label"><span>强度 · Intensity</span><span id="v1">0.30</span></div><input type="range" min="0" max="1" step="0.01" value="0.3" id="f1i"></div>
+<div class="param-row"><div class="param-label"><span>粒度 · Size</span><span id="v2">2.0</span></div><input type="range" min="0.5" max="10" step="0.5" value="2" id="f1s"></div>
+<div class="param-row"><select id="f1c"><option value="0" selected>彩色 · Color</option><option value="1">灰度 · Grayscale</option></select></div>
+</div>
+<!-- Halftone -->
+<div class="effect-group"><div class="effect-header"><label>半色调 · Halftone</label><label class="toggle"><input type="checkbox" id="f2"><span class="toggle-slider"></span></label></div>
+<div class="param-row"><div class="param-label"><span>网点大小 · Dot Size</span><span id="v3">8.0</span></div><input type="range" min="2" max="30" step="0.5" value="8" id="f2s"></div>
+<div class="param-row"><div class="param-label"><span>角度 · Angle</span><span id="v4">45.0</span></div><input type="range" min="0" max="90" step="1" value="45" id="f2a"></div>
+<div class="param-row"><select id="f2t"><option value="0" selected>网点 · Dots</option><option value="1">线状 · Lines</option></select></div>
+</div>
+<!-- Pixelate -->
+<div class="effect-group"><div class="effect-header"><label>像素化 · Pixelate</label><label class="toggle"><input type="checkbox" id="f3"><span class="toggle-slider"></span></label></div>
+<div class="param-row"><div class="param-label"><span>块大小 · Block Size</span><span id="v5">8</span></div><input type="range" min="2" max="64" step="1" value="8" id="f3b"></div>
+</div>
+<div class="noise-info">💡 纹理叠加三件套。噪点增质感，半色调做印刷风，像素化玩低多边形。</div>
+</div>
+<script src="shared/glitch-engine.js"></script>
+<script src="shared/demo-runner.js"></script>
+<script>
+const C='precision mediump float;varying vec2 v_texCoord;uniform sampler2D u_texture;uniform vec2 u_resolution;';
+const F1=C+`uniform float u_intensity,u_size;uniform int u_color;float hash(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
+void main(){vec4 c=texture2D(u_texture,v_texCoord);float n=hash(v_texCoord*u_resolution/u_size);if(u_color==0){c.rgb+=vec3(hash(v_texCoord+0.1)-0.5,hash(v_texCoord+0.2)-0.5,hash(v_texCoord+0.3)-0.5)*u_intensity;}else{float g=(n-0.5)*u_intensity;c.rgb+=g;}gl_FragColor=c;}`;
+const F2=C+`uniform float u_size,u_angle;uniform int u_type;float lum(vec3 c){return dot(c,vec3(0.299,0.587,0.114));}
+void main(){vec2 uv=v_texCoord*u_resolution;float d;
+// dots模式无需旋转向量，仅在lines模式下计算三角函数 / trig ops only needed for lines mode
+if(u_type==0){vec2 p=fract(uv/u_size)-0.5;d=length(p)*2.0;}else{float a=radians(u_angle);vec2 r=vec2(cos(a),sin(a));d=abs(fract(dot(uv,r)/u_size)-0.5)*2.0;}
+float l=lum(texture2D(u_texture,v_texCoord).rgb);
+// 过渡宽度与网点大小成比例 / Transition width proportional to dot size
+float bw = 0.15 + 0.3 * (u_size / 30.0);
+float t=smoothstep(l-bw,l,1.0-d);
+gl_FragColor=vec4(vec3(t),1.0);}`;
+const F3=C+`uniform float u_block;void main(){vec2 uv=v_texCoord;uv=floor(uv*u_resolution/u_block)*u_block/u_resolution+u_block/u_resolution*0.5;gl_FragColor=texture2D(u_texture,uv);}`;
+GlitchDemoRunner.init({
+  canvasId: 'cv',
+  dropZoneId: 'dz',
+  previewPanelId: 'pp',
+  downloadButtonId: 'btnDL',
+  valueBindings: {
+    f1i: 'v1',
+    f1s: 'v2',
+    f2s: 'v3',
+    f2a: 'v4',
+    f3b: 'v5'
+  },
+  controlSelector: 'input[type=range],select,input[type=checkbox]',
+  buildEffects: ({ checked, float, int }) => {
+    const effects = [];
+    if (checked('f1')) {
+      effects.push({
+        shader: F1,
+        uniforms: {
+          u_intensity: float('f1i'),
+          u_size: float('f1s'),
+          u_color: int('f1c')
+        }
+      });
+    }
+    if (checked('f2')) {
+      effects.push({
+        shader: F2,
+        uniforms: {
+          u_size: float('f2s'),
+          u_angle: float('f2a'),
+          u_type: int('f2t')
+        }
+      });
+    }
+    if (checked('f3')) {
+      effects.push({
+        shader: F3,
+        uniforms: { u_block: float('f3b') }
+      });
+    }
+    return effects;
+  }
+});
+</script></body></html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>故障艺术 Demo #2 — 万花筒 · 波浪变形 · 镜像对称</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d0d0d;color:#ccc;display:flex;height:100vh;overflow:hidden}
+.preview-panel{flex:1;display:flex;align-items:center;justify-content:center;background:#111;position:relative;min-width:0}
+.preview-panel canvas{max-width:100%;max-height:100%;object-fit:contain}
+.drop-zone{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border:2px dashed #333;border-radius:8px;margin:20px;color:#555;font-size:18px;cursor:pointer;transition:border-color .2s}
+.drop-zone:hover,.drop-zone.drag-over{border-color:#f0f;color:#f0f}
+.ctrl-panel{width:340px;background:#1a1a1a;display:flex;flex-direction:column;overflow-y:auto;border-left:1px solid #2a2a2a}
+.panel-header{padding:16px 20px;border-bottom:1px solid #2a2a2a;display:flex;justify-content:space-between;align-items:center}
+.panel-header h2{font-size:16px;color:#fff}
+.btn{padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-size:13px;transition:all .15s}
+.btn-primary{background:#f0f;color:#000;font-weight:600}.btn-primary:hover{background:#d0d}
+.effect-group{padding:16px 20px;border-bottom:1px solid #222}
+.effect-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.effect-header label{font-size:14px;color:#fff;font-weight:500}
+.toggle{position:relative;display:inline-block;width:40px;height:22px}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:#333;border-radius:22px;transition:.2s}
+.toggle-slider:before{content:'';position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#666;border-radius:50%;transition:.2s}
+.toggle input:checked+.toggle-slider{background:#f0f}
+.toggle input:checked+.toggle-slider:before{transform:translateX(18px);background:#000}
+.param-row{margin-bottom:10px}.param-row:last-child{margin-bottom:0}
+.param-label{display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:3px}
+.param-label span:last-child{color:#f0f;font-family:monospace}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:#333;border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:#f0f;border-radius:50%;cursor:pointer}
+select{width:100%;padding:4px 8px;background:#222;color:#ccc;border:1px solid #333;border-radius:4px;font-size:12px;outline:none}
+select:focus{border-color:#f0f}
+.toolbar{padding:16px 20px;border-top:1px solid #2a2a2a;display:flex;gap:8px;flex-wrap:wrap}
+.noise-info{font-size:11px;color:#555;padding:8px 20px}
+</style></head><body>
+<div class="preview-panel" id="previewPanel">
+<div class="drop-zone" id="dropZone">📁 拖拽图片到此处，或点击上传</div>
+<canvas id="outputCanvas"></canvas></div>
+<div class="ctrl-panel">
+<div class="panel-header"><h2>🎛️ Glitch Art Demo #2</h2><button class="btn btn-primary" id="btnDownload">下载 PNG</button></div>
+<!-- 万花筒 -->
+<div class="effect-group"><div class="effect-header"><label>万花筒 · Kaleidoscope</label><label class="toggle"><input type="checkbox" id="fx1On"><span class="toggle-slider"></span></label></div>
+<div class="param-row"><div class="param-label"><span>面数 · Sides</span><span id="v1">6</span></div><input type="range" min="2" max="16" step="1" value="6" id="fx1Sides"></div>
+<div class="param-row"><div class="param-label"><span>角度 · Angle</span><span id="v2">0.00</span></div><input type="range" min="0" max="6.28" step="0.01" value="0" id="fx1Angle"></div>
+<div class="param-row"><div class="param-label"><span>中心X · Center X</span><span id="v3">0.50</span></div><input type="range" min="0" max="1" step="0.01" value="0.5" id="fx1CX"></div>
+<div class="param-row"><div class="param-label"><span>中心Y · Center Y</span><span id="v4">0.50</span></div><input type="range" min="0" max="1" step="0.01" value="0.5" id="fx1CY"></div>
+</div>
+<!-- 波浪变形 -->
+<div class="effect-group"><div class="effect-header"><label>波浪变形 · Wave Distortion</label><label class="toggle"><input type="checkbox" id="fx2On" checked><span class="toggle-slider"></span></label></div>
+<div class="param-row"><div class="param-label"><span>振幅 · Amplitude</span><span id="v5">10.0</span></div><input type="range" min="0" max="50" step="0.5" value="10" id="fx2Amp"></div>
+<div class="param-row"><div class="param-label"><span>频率 · Frequency</span><span id="v6">3.0</span></div><input type="range" min="0.5" max="20" step="0.5" value="3" id="fx2Freq"></div>
+<div class="param-row"><select id="fx2Dir"><option value="0">水平 · Horizontal</option><option value="1">垂直 · Vertical</option><option value="2">径向 · Radial</option></select></div>
+</div>
+<!-- 镜像对称 -->
+<div class="effect-group"><div class="effect-header"><label>镜像对称 · Mirror</label><label class="toggle"><input type="checkbox" id="fx3On"><span class="toggle-slider"></span></label></div>
+<div class="param-row"><select id="fx3Mode"><option value="0">水平 · Horizontal</option><option value="1">垂直 · Vertical</option><option value="2" selected>四象限 · Quad</option></select></div>
+</div>
+<div class="noise-info">💡 几何变形三件套。万花筒做VJ效果，波浪做流动感，镜像做对称构图。</div>
+</div>
+<script src="shared/glitch-engine.js"></script>
+<script src="shared/demo-runner.js"></script>
+<script>
+const FX1=`precision mediump float;varying vec2 v_texCoord;uniform sampler2D u_texture;uniform vec2 u_resolution;uniform float u_sides;uniform float u_angle;uniform vec2 u_center;
+void main(){vec2 uv=v_texCoord-u_center;float a=atan(uv.y,uv.x)+u_angle;float r=length(uv);float seg=3.14159*2.0/u_sides;a=mod(a,seg);a=min(a,seg-a);uv=r*vec2(cos(a),sin(a));uv+=u_center;uv=clamp(uv,0.0,1.0);gl_FragColor=texture2D(u_texture,uv);}`;
+const FX2=`precision mediump float;varying vec2 v_texCoord;uniform sampler2D u_texture;uniform vec2 u_resolution;uniform float u_amplitude;uniform float u_frequency;uniform int u_direction;
+void main(){vec2 uv=v_texCoord;float amp=u_amplitude/u_resolution.x;float freq=u_frequency*6.28318;float offset=0.0;if(u_direction==0)offset=sin(uv.y*freq)*amp;else if(u_direction==1)offset=sin(uv.x*freq)*amp;else{float d=length(uv-0.5);offset=sin(d*freq)*amp;}uv+=offset;uv=clamp(uv,0.0,1.0);gl_FragColor=texture2D(u_texture,uv);}`;
+const FX3=`precision mediump float;varying vec2 v_texCoord;uniform sampler2D u_texture;uniform vec2 u_resolution;uniform int u_mode;
+void main(){vec2 uv=v_texCoord;if(u_mode==0)uv.x=uv.x<0.5?uv.x:1.0-uv.x;else if(u_mode==1)uv.y=uv.y<0.5?uv.y:1.0-uv.y;else{uv.x=uv.x<0.5?uv.x:1.0-uv.x;uv.y=uv.y<0.5?uv.y:1.0-uv.y;}gl_FragColor=texture2D(u_texture,uv);}`;
+GlitchDemoRunner.init({
+  canvasId: 'outputCanvas',
+  dropZoneId: 'dropZone',
+  previewPanelId: 'previewPanel',
+  downloadButtonId: 'btnDownload',
+  valueBindings: {
+    fx1Sides: 'v1',
+    fx1Angle: 'v2',
+    fx1CX: 'v3',
+    fx1CY: 'v4',
+    fx2Amp: 'v5',
+    fx2Freq: 'v6'
+  },
+  controlSelector: 'input[type=range],select,input[type=checkbox]',
+  buildEffects: ({ checked, float, int }) => {
+    const effects = [];
+    if (checked('fx1On')) {
+      effects.push({
+        shader: FX1,
+        uniforms: {
+          u_sides: float('fx1Sides'),
+          u_angle: float('fx1Angle'),
+          u_center: [float('fx1CX'), float('fx1CY')]
+        }
+      });
+    }
+    if (checked('fx2On')) {
+      effects.push({
+        shader: FX2,
+        uniforms: {
+          u_amplitude: float('fx2Amp'),
+          u_frequency: float('fx2Freq'),
+          u_direction: int('fx2Dir')
+        }
+      });
+    }
+    if (checked('fx3On')) {
+      effects.push({
+        shader: FX3,
+        uniforms: { u_mode: int('fx3Mode') }
+      });
+    }
+    return effects;
+  }
+});
+</script></body></html>

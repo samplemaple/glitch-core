@@ -1,0 +1,125 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>故障艺术 Demo #5 — VHS磁带 · CRT屏幕 · 8-bit色域</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d0d0d;color:#ccc;display:flex;height:100vh;overflow:hidden}
+.preview-panel{flex:1;display:flex;align-items:center;justify-content:center;background:#111;position:relative;min-width:0}
+.preview-panel canvas{max-width:100%;max-height:100%;object-fit:contain}
+.drop-zone{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border:2px dashed #333;border-radius:8px;margin:20px;color:#555;font-size:18px;cursor:pointer;transition:border-color .2s}
+.drop-zone:hover,.drop-zone.drag-over{border-color:#f80;color:#f80}
+.ctrl-panel{width:340px;background:#1a1a1a;display:flex;flex-direction:column;overflow-y:auto;border-left:1px solid #2a2a2a}
+.panel-header{padding:16px 20px;border-bottom:1px solid #2a2a2a;display:flex;justify-content:space-between;align-items:center}
+.panel-header h2{font-size:16px;color:#fff}
+.btn{padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-size:13px}
+.btn-primary{background:#f80;color:#000;font-weight:600}.btn-primary:hover{background:#d60}
+.effect-group{padding:16px 20px;border-bottom:1px solid #222}
+.effect-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.effect-header label{font-size:14px;color:#fff;font-weight:500}
+.toggle{position:relative;display:inline-block;width:40px;height:22px}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:#333;border-radius:22px;transition:.2s}
+.toggle-slider:before{content:'';position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#666;border-radius:50%;transition:.2s}
+.toggle input:checked+.toggle-slider{background:#f80}
+.toggle input:checked+.toggle-slider:before{transform:translateX(18px);background:#000}
+.param-row{margin-bottom:10px}.param-row:last-child{margin-bottom:0}
+.param-label{display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:3px}
+.param-label span:last-child{color:#f80;font-family:monospace}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:#333;border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:#f80;border-radius:50%;cursor:pointer}
+select{width:100%;padding:4px 8px;background:#222;color:#ccc;border:1px solid #333;border-radius:4px;font-size:12px;outline:none}select:focus{border-color:#f80}
+.noise-info{font-size:11px;color:#555;padding:8px 20px}
+</style></head><body>
+<div class="preview-panel" id="pp"><div class="drop-zone" id="dz">📁 拖拽图片到此处，或点击上传</div><canvas id="cv"></canvas></div>
+<div class="ctrl-panel">
+<div class="panel-header"><h2>🎛️ Glitch Art Demo #5</h2><button class="btn btn-primary" id="btnDL">下载 PNG</button></div>
+<!-- VHS -->
+<div class="effect-group"><div class="effect-header"><label>VHS 磁带 · VHS Tape</label><label class="toggle"><input type="checkbox" id="f1" checked><span class="toggle-slider"></span></label></div>
+<div class="param-row"><div class="param-label"><span>跟踪线 · Tracking</span><span id="v1">0.30</span></div><input type="range" min="0" max="1" step="0.01" value="0.3" id="f1t"></div>
+<div class="param-row"><div class="param-label"><span>噪点 · Noise</span><span id="v2">0.15</span></div><input type="range" min="0" max="0.5" step="0.01" value="0.15" id="f1n"></div>
+<div class="param-row"><div class="param-label"><span>色偏 · Color Bleed</span><span id="v3">0.20</span></div><input type="range" min="0" max="1" step="0.01" value="0.2" id="f1c"></div>
+</div>
+<!-- CRT -->
+<div class="effect-group"><div class="effect-header"><label>CRT 屏幕 · CRT Monitor</label><label class="toggle"><input type="checkbox" id="f2"><span class="toggle-slider"></span></label></div>
+<div class="param-row"><div class="param-label"><span>像素间距 · Pixel Gap</span><span id="v4">2.0</span></div><input type="range" min="1" max="8" step="0.5" value="2" id="f2g"></div>
+<div class="param-row"><div class="param-label"><span>曲面 · Curvature</span><span id="v5">0.10</span></div><input type="range" min="0" max="0.3" step="0.01" value="0.1" id="f2c"></div>
+<div class="param-row"><div class="param-label"><span>暗角 · Vignette</span><span id="v6">0.40</span></div><input type="range" min="0" max="1" step="0.01" value="0.4" id="f2v"></div>
+<div class="param-row"><div class="param-label"><span>色散 · Dispersion</span><span id="v7">0.05</span></div><input type="range" min="0" max="0.2" step="0.01" value="0.05" id="f2d"></div>
+</div>
+<!-- 8-bit -->
+<div class="effect-group"><div class="effect-header"><label>8-bit 色域 · 8-Bit Palette</label><label class="toggle"><input type="checkbox" id="f3"><span class="toggle-slider"></span></label></div>
+<div class="param-row"><select id="f3p"><option value="0" selected>CGA 调色板1 (Cyan/Magenta)</option><option value="1">CGA 调色板2 (Red/Green)</option><option value="2">EGA (16色)</option><option value="3">Game Boy (4阶绿)</option></select></div>
+<div class="param-row"><div class="param-label"><span>像素化 · Pixelate</span><span id="v8">4</span></div><input type="range" min="1" max="16" step="1" value="4" id="f3px"></div>
+</div>
+<div class="noise-info">💡 复古屏幕三件套。VHS模拟磁带，CRT复刻老显示器，8-bit直接穿越1982年。</div>
+</div>
+<script src="shared/glitch-engine.js"></script>
+<script src="shared/demo-runner.js"></script>
+<script>
+const C='precision mediump float;varying vec2 v_texCoord;uniform sampler2D u_texture;uniform vec2 u_resolution;';
+const F1=C+`uniform float u_track,u_noise,u_bleed;float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+void main(){vec2 uv=v_texCoord;float t=hash(vec2(floor(uv.y*u_resolution.y/3.0),uv.y));float track=smoothstep(u_track-0.05,u_track,t)*hash(vec2(t,uv.y))*u_bleed;uv.x+=track*0.02;uv.x=clamp(uv.x,0.0,1.0);
+vec4 c=texture2D(u_texture,uv);float n=(hash(uv*u_resolution)-0.5)*u_noise;c.rgb+=n;c.r+=track*0.3*c.r;c.b-=track*0.2*c.b;gl_FragColor=c;}`;
+const F2=C+`uniform float u_gap,u_curve,u_vignette,u_dispersion;
+// CRT 曲面：safe curvature formula with outer bound guard
+// uv = d * (1 - curve*r²) + 0.5, clamped to prevent visual overflow
+void main(){vec2 uv=v_texCoord;vec2 d=uv-0.5;float r=length(d);float safeCurve=min(u_curve,0.25);uv=d*(1.0-safeCurve*r*r)+0.5;if(uv.x<0.0||uv.x>1.0||uv.y<0.0||uv.y>1.0){gl_FragColor=vec4(0.0,0.0,0.0,1.0);return;}
+vec2 ps=1.0/u_resolution;float rVal=texture2D(u_texture,uv+vec2(u_dispersion,0.0)).r;float gVal=texture2D(u_texture,uv).g;float bVal=texture2D(u_texture,uv+vec2(-u_dispersion,0.0)).b;
+float mask=mod(uv.y*u_resolution.y,u_gap*3.0)<u_gap?1.0:0.4;
+vec3 col=vec3(rVal,gVal,bVal)*mask;col*=1.0-u_vignette*r*2.0;gl_FragColor=vec4(col,1.0);}`;
+const F3=C+`uniform int u_palette;uniform float u_pixelate;
+vec3 pal(float l,int p){if(p==0){if(l<0.33)return vec3(0,0,0);if(l<0.66)return vec3(0,1,1);return vec3(1,0,1);}
+if(p==1){if(l<0.33)return vec3(0,0,0);if(l<0.66)return vec3(1,0,0);return vec3(0,1,0);}
+if(p==2){float i=floor(l*15.0+0.5);float b=mod(i,2.0),g=mod(floor(i/2.0),2.0),r=mod(floor(i/4.0),2.0);return vec3(r,g,b)*0.67+0.33;}
+float gb=l*0.5+0.2;return vec3(gb*0.2,gb*0.7,gb*0.1);}
+void main(){vec2 uv=v_texCoord;uv=floor(uv*u_resolution/u_pixelate)*u_pixelate/u_resolution+u_pixelate/u_resolution*0.5;vec4 c=texture2D(u_texture,uv);float l=dot(c.rgb,vec3(0.299,0.587,0.114));gl_FragColor=vec4(pal(l,u_palette),1.0);}`;
+GlitchDemoRunner.init({
+  canvasId: 'cv',
+  dropZoneId: 'dz',
+  previewPanelId: 'pp',
+  downloadButtonId: 'btnDL',
+  valueBindings: {
+    f1t: 'v1',
+    f1n: 'v2',
+    f1c: 'v3',
+    f2g: 'v4',
+    f2c: 'v5',
+    f2v: 'v6',
+    f2d: 'v7',
+    f3px: 'v8'
+  },
+  controlSelector: 'input[type=range],select,input[type=checkbox]',
+  buildEffects: ({ checked, float, int }) => {
+    const effects = [];
+    if (checked('f1')) {
+      effects.push({
+        shader: F1,
+        uniforms: {
+          u_track: float('f1t'),
+          u_noise: float('f1n'),
+          u_bleed: float('f1c')
+        }
+      });
+    }
+    if (checked('f2')) {
+      effects.push({
+        shader: F2,
+        uniforms: {
+          u_gap: float('f2g'),
+          u_curve: float('f2c'),
+          u_vignette: float('f2v'),
+          u_dispersion: float('f2d')
+        }
+      });
+    }
+    if (checked('f3')) {
+      effects.push({
+        shader: F3,
+        uniforms: {
+          u_palette: int('f3p'),
+          u_pixelate: float('f3px')
+        }
+      });
+    }
+    return effects;
+  }
+});
+</script></body></html>
