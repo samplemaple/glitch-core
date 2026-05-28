@@ -1,5 +1,7 @@
 # glitch-core
 
+[中文](README.zh-CN.md)
+
 > Cross-platform glitch art shader core — 19 GLSL effects.
 > MIT licensed. Use anywhere.
 
