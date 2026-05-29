@@ -1,43 +1,56 @@
-# glitch-core
+# glitch-core — WebGL GLSL Glitch Art Shaders
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/samplemaple/glitch-core?style=social)](https://github.com/samplemaple/glitch-core)
 
 [中文](README.zh-CN.md)
 
-> Cross-platform glitch art shader core — 19 GLSL effects.
-> MIT licensed. Use anywhere.
+> 19 production-grade GLSL fragment shaders for real-time glitch art and
+> image effects — pixel sorting, RGB channel shift, scanlines, VHS, CRT,
+> data corruption, and more. WebGL, GLES, Metal ready.
+
+![GlitchForge showcase — neon city glitch effect](docs/showcase-neon-city.webp)
+
+*Neon city glitch — RGB shift + scanlines + VHS + data glitch. Made with **[GlitchForge](https://glitchforge.org)**.*
 
 ## What is this?
 
 A collection of 19 production-grade GLSL fragment shaders for real-time
-glitch art effects — pixel sorting, RGB shift, scanlines, VHS, CRT,
-data corruption, and more.
+glitch art and image effects. Upload an image, stack effects, adjust
+parameters — instant WebGL preview.
 
-Built for **[GlitchForge](https://glitchforge.pages.dev)** —
-a free online glitch art tool. This repo is the shader engine
-extracted for use on any platform.
+Used in production by **[GlitchForge](https://glitchforge.org)** —
+a free online glitch art tool (no watermark, full resolution export).
+This repo is the shader engine extracted for use on any platform:
+browser, mobile, CLI, or server.
+
+**No build step. No framework lock-in.** Each shader is a single `.glsl`
+file with documented uniforms. Drop them into any WebGL, GLES, or Metal
+pipeline.
 
 ## Effects
 
-| # | Effect | Key | Animated |
-|---|--------|-----|:--:|
-| 1 | Pixel Sort | `pixel-sort` | |
-| 2 | RGB Shift | `rgb-shift` | |
-| 3 | Scanlines | `scanlines` | |
-| 4 | Kaleidoscope | `kaleidoscope` | |
-| 5 | Wave | `wave` | |
-| 6 | Mirror | `mirror` | |
-| 7 | Duotone | `duotone` | |
-| 8 | Channel Invert | `channel-invert` | |
-| 9 | Hue Shift | `hue-shift` | |
-| 10 | Grain | `grain` | ✅ |
-| 11 | Halftone | `halftone` | |
-| 12 | Pixelate | `pixelate` | |
-| 13 | VHS | `vhs` | ✅ |
-| 14 | CRT | `crt` | ✅ |
-| 15 | 8-Bit | `8bit` | |
-| 16 | Edge Detect | `edge-detect` | |
-| 17 | Brightness/Contrast/Saturation | `brightness` | |
-| 18 | Data Glitch | `data-glitch` | |
-| 19 | Stretch | `stretch` | |
+| # | Effect | Key | Description |
+|---|--------|-----|-------------|
+| 1 | Pixel Sort | `pixel-sort` | Sort pixels by brightness along a direction |
+| 2 | RGB Shift | `rgb-shift` | Shift red/blue channels horizontally |
+| 3 | Scanlines | `scanlines` | CRT-style horizontal line overlay |
+| 4 | Kaleidoscope | `kaleidoscope` | Radial symmetry mirroring |
+| 5 | Wave | `wave` | Sinusoidal displacement |
+| 6 | Mirror | `mirror` | Horizontal or vertical reflection |
+| 7 | Duotone | `duotone` | Two-color gradient mapping |
+| 8 | Channel Invert | `channel-invert` | Invert individual RGB channels |
+| 9 | Hue Shift | `hue-shift` | Rotate hue in HSL space |
+| 10 | Grain | `grain` | Film-grain noise overlay — animated |
+| 11 | Halftone | `halftone` | CMYK-style dot pattern |
+| 12 | Pixelate | `pixelate` | Block-pixel downsampling |
+| 13 | VHS | `vhs` | Tracking lines + color bleed — animated |
+| 14 | CRT | `crt` | Curved screen + chromatic aberration + vignette — animated |
+| 15 | 8-Bit | `8bit` | Quantize to limited color palette |
+| 16 | Edge Detect | `edge-detect` | Sobel edge detection |
+| 17 | Brightness/Contrast/Saturation | `brightness` | Image adjustments |
+| 18 | Data Glitch | `data-glitch` | Block corruption simulation |
+| 19 | Stretch | `stretch` | Horizontal tearing and displacement |
 
 ## Quick Start
 
@@ -72,8 +85,8 @@ glitch-core/
 
 | Platform | Status | Backend |
 |----------|:------:|---------|
-| Web (browser) | ✅ demos ready | WebGL 1.0 |
-| Web (GlitchForge) | ✅ [live](https://glitchforge.pages.dev) | WebGL + Next.js |
+| Web (demos) | ✅ ready | WebGL 1.0 |
+| Web (GlitchForge) | ✅ [live](https://glitchforge.org) | WebGL + Next.js |
 | Android | 📋 planned | GLES 2.0 / GLES 3.0 |
 | iOS | 📋 planned | Metal / GLES |
 | CLI / Server | 📋 planned | Headless GL / CPU fallback |
@@ -96,7 +109,7 @@ glitch-core/
 
 All platforms share the same GLSL shaders.
 Platform wrappers handle texture I/O, context management,
-and uniform binding — but the visual logic lives here.
+and uniform binding — the visual logic lives here.
 
 ## License
 
@@ -105,5 +118,5 @@ mobile apps, CLI tools. No attribution required (but appreciated).
 
 ---
 
-**Built with ❤️ by [GlitchForge](https://glitchforge.pages.dev)**
+**Built with ❤️ by [GlitchForge](https://glitchforge.org)**
 — Free online glitch art, no watermarks, full resolution.
